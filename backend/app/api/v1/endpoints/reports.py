@@ -10,7 +10,8 @@ from datetime import date, datetime
 from app.db.session import get_db
 from app.models.report import Report, ReportSection, ReportStatus
 from app.models.user import User
-from app.core.security import get_current_active_user
+from app.core.security import get_current_active_user, require_manager_or_admin
+from app.models.user import UserRole
 from app.services.audit import log_action
 
 router = APIRouter()
@@ -309,9 +310,9 @@ async def generate_report_drafts(
 async def approve_report(
     report_id: UUID,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_active_user),
+    current_user: User = Depends(require_manager_or_admin()),
 ):
-    """Approve a report."""
+    """Approve a report. Requires MANAGER or ADMIN role."""
     result = await db.execute(select(Report).where(Report.id == report_id))
     report = result.scalar_one_or_none()
     

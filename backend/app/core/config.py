@@ -32,11 +32,17 @@ class Settings(BaseSettings):
     ALLOWED_IMAGE_TYPES: List[str] = ["image/jpeg", "image/png", "image/webp", "image/heic"]
     ALLOWED_DOCUMENT_TYPES: List[str] = ["application/pdf", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"]
     
-    # OpenAI
+    # OpenAI (optional - only if USE_LOCAL_LLM=false)
     OPENAI_API_KEY: str = ""
     OPENAI_MODEL: str = "gpt-4-turbo"
     OPENAI_VISION_MODEL: str = "gpt-4-vision-preview"
     OPENAI_EMBEDDING_MODEL: str = "text-embedding-3-small"
+    
+    # Local LLM Settings (Ollama)
+    USE_LOCAL_LLM: bool = True
+    OLLAMA_HOST: str = "http://localhost:11434"
+    LOCAL_MODEL: str = "llama3.2"
+    LOCAL_EMBEDDING_MODEL: str = "nomic-embed-text"
     
     # RAG Settings
     RAG_CHUNK_SIZE: int = 500

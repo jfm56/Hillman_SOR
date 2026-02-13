@@ -1,6 +1,5 @@
 from typing import List, Optional
 from uuid import UUID
-from app.services.ai.openai_client import get_openai_client
 from app.core.config import settings
 
 
@@ -20,7 +19,8 @@ Guidelines:
 - Use Hillmann's standard terminology and phrasing
 - Be helpful but concise
 
-You have access to project context when provided. Use it to give more relevant responses."""
+You have access to project context when provided. Use it to give more relevant responses.
+All conversations are private and processed locally - no data is sent to external services."""
 
 
 async def generate_chat_response(
@@ -29,8 +29,7 @@ async def generate_chat_response(
     project_id: Optional[UUID] = None,
     report_id: Optional[UUID] = None,
 ) -> dict:
-    """Generate a chat response."""
-    client = get_openai_client()
+    """Generate a chat response using local LLM or OpenAI."""
     
     # Build system message with context
     system_content = SYSTEM_PROMPT
@@ -51,15 +50,30 @@ async def generate_chat_response(
             "content": msg["content"]
         })
     
-    response = await client.chat.completions.create(
-        model=settings.OPENAI_MODEL,
-        messages=chat_messages,
-        max_tokens=1000,
-        temperature=0.7,
-    )
-    
-    return {
-        "content": response.choices[0].message.content,
-        "tokens_used": response.usage.total_tokens,
-        "model": settings.OPENAI_MODEL,
-    }
+    # Use local LLM if configured
+    if settings.USE_LOCAL_LLM:
+        from app.services.ai.local_llm import generate_chat_completion
+        
+        content = await generate_chat_completion(chat_messages)
+        return {
+            "content": content,
+            "tokens_used": 0,  # Ollama doesn't report tokens the same way
+            "model": f"local:{settings.LOCAL_MODEL}",
+        }
+    else:
+        # Fallback to OpenAI
+        from app.services.ai.openai_client import get_openai_client
+        client = get_openai_client()
+        
+        response = await client.chat.completions.create(
+            model=settings.OPENAI_MODEL,
+            messages=chat_messages,
+            max_tokens=1000,
+            temperature=0.7,
+        )
+        
+        return {
+            "content": response.choices[0].message.content,
+            "tokens_used": response.usage.total_tokens,
+            "model": settings.OPENAI_MODEL,
+        }

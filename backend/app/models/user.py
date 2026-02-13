@@ -9,10 +9,14 @@ from app.db.base import Base, TimestampMixin
 
 
 class UserRole(str, enum.Enum):
+    """
+    ADMIN: IT / system control - full access to all features
+    MANAGER: Review & approve reports - can approve/reject reports
+    INSPECTOR: Upload photos & write narratives - create and edit reports
+    """
     ADMIN = "admin"
     MANAGER = "manager"
     INSPECTOR = "inspector"
-    REVIEWER = "reviewer"
 
 
 class User(Base, TimestampMixin):

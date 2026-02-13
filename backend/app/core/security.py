@@ -72,6 +72,7 @@ async def get_current_active_user(current_user = Depends(get_current_user)):
 
 
 def require_role(allowed_roles: list):
+    """Generic role checker - pass list of allowed UserRole values."""
     async def role_checker(current_user = Depends(get_current_active_user)):
         if current_user.role not in allowed_roles:
             raise HTTPException(
@@ -80,3 +81,22 @@ def require_role(allowed_roles: list):
             )
         return current_user
     return role_checker
+
+
+# Convenience dependencies for role-based access
+def require_admin():
+    """Only ADMIN can access."""
+    from app.models.user import UserRole
+    return require_role([UserRole.ADMIN])
+
+
+def require_manager_or_admin():
+    """MANAGER or ADMIN can access (for approving reports)."""
+    from app.models.user import UserRole
+    return require_role([UserRole.ADMIN, UserRole.MANAGER])
+
+
+def require_any_role():
+    """Any authenticated user (INSPECTOR, MANAGER, ADMIN)."""
+    from app.models.user import UserRole
+    return require_role([UserRole.ADMIN, UserRole.MANAGER, UserRole.INSPECTOR])

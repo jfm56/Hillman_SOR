@@ -9,6 +9,8 @@ import {
   MessageSquare,
   Settings,
   LogOut,
+  BookOpen,
+  Users,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -16,7 +18,9 @@ const navigation = [
   { name: "Dashboard", href: "/", icon: LayoutDashboard },
   { name: "Projects", href: "/projects", icon: FolderOpen },
   { name: "Reports", href: "/reports", icon: FileText },
+  { name: "Style Learning", href: "/style-learning", icon: BookOpen },
   { name: "AI Chat", href: "/chat", icon: MessageSquare },
+  { name: "User Management", href: "/admin/users", icon: Users },
   { name: "Settings", href: "/settings", icon: Settings },
 ];
 

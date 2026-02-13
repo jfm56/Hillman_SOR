@@ -1,46 +1,50 @@
 # SOR AI System
 
-A secure, server-hosted web application for generating Hillmann Site Observation Reports (SOR) using AI-powered image analysis, document parsing, and style-learning draft generation.
+A secure, **fully local** web application for generating Hillmann Site Observation Reports (SOR) using AI-powered image analysis, document parsing, and style-learning draft generation.
+
+**🔒 Privacy First**: All AI processing runs locally using Ollama - no data ever leaves your network.
 
 ## Features
 
 | Feature | Description |
 |---------|-------------|
-| **Photo Upload & Analysis** | GPT-4 Vision analyzes site photos for conditions, materials, and safety issues |
+| **Local LLM (Ollama)** | 100% on-premises AI - no external API calls, PHI-safe |
+| **Photo Upload & Analysis** | AI analyzes site photos for conditions, materials, and safety issues |
 | **PDF Document Parsing** | Extract structured data from plans, cost reviews, change orders, and prior SORs |
-| **Building Classification** | Auto-suggest building assignments using embedding similarity |
-| **RAG Style Learning** | Generate drafts matching Hillmann's writing style from historical reports |
-| **AI-Assisted Editing** | Private chat assistant for rewriting and improving report sections |
+| **Style Learning** | Upload past reports to teach the AI your writing style |
+| **RAG Draft Generation** | Generate drafts matching Hillmann's writing style from learned reports |
+| **AI Chat Assistant** | Private chat for rewriting and improving report sections |
+| **Role-Based Access** | ADMIN, MANAGER, INSPECTOR roles with appropriate permissions |
 | **Full Audit Logging** | Track all user actions and AI interactions for compliance |
-| **Version History** | Maintain complete revision history for all reports |
 
 ## Architecture
 
 ```
-┌────────────────────────────────────────────────────────────────┐
-│                      SOR AI SYSTEM                             │
-├────────────────────────────────────────────────────────────────┤
-│                                                                │
-│  ┌──────────────┐    ┌──────────────┐    ┌──────────────┐     │
-│  │   Frontend   │    │   Backend    │    │   Database   │     │
-│  │   Next.js    │◄──►│   FastAPI    │◄──►│  PostgreSQL  │     │
-│  │   Port 3000  │    │   Port 8000  │    │  + pgvector  │     │
-│  └──────────────┘    └──────────────┘    └──────────────┘     │
-│         │                   │                                  │
-│         │            ┌──────┴──────┐                          │
-│         │            │ AI Services │                          │
-│         │            ├─────────────┤                          │
-│         │            │ • Vision    │                          │
-│         │            │ • PDF Parse │                          │
-│         │            │ • RAG       │                          │
-│         │            │ • Draft Gen │                          │
-│         │            │ • Chat      │                          │
-│         │            └─────────────┘                          │
-│         │                   │                                  │
-│         └───────────────────┼──────────────────────────────►  │
-│                      File Storage                              │
-│                      ./storage/                                │
-└────────────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────────────┐
+│                      SOR AI SYSTEM (100% Local)                      │
+├─────────────────────────────────────────────────────────────────────┤
+│                                                                      │
+│  ┌──────────────┐    ┌──────────────┐    ┌──────────────┐           │
+│  │   Frontend   │    │   Backend    │    │   Database   │           │
+│  │   Next.js    │◄──►│   FastAPI    │◄──►│  PostgreSQL  │           │
+│  │   Port 3000  │    │   Port 8000  │    │  + pgvector  │           │
+│  └──────────────┘    └──────────────┘    └──────────────┘           │
+│                             │                                        │
+│                      ┌──────┴──────┐    ┌──────────────┐            │
+│                      │ AI Services │◄──►│   Ollama     │            │
+│                      ├─────────────┤    │  Local LLM   │            │
+│                      │ • Chat      │    │  Port 11434  │            │
+│                      │ • RAG       │    └──────────────┘            │
+│                      │ • Draft Gen │           │                     │
+│                      │ • Style     │    ┌──────┴──────┐             │
+│                      │   Learning  │    │   Models    │             │
+│                      └─────────────┘    │ • llama3.2  │             │
+│                             │           │ • nomic-    │             │
+│                      ┌──────┴──────┐    │   embed     │             │
+│                      │File Storage │    └─────────────┘             │
+│                      │ ./storage/  │                                 │
+│                      └─────────────┘                                 │
+└─────────────────────────────────────────────────────────────────────┘
 ```
 
 ## Quick Start
@@ -48,27 +52,23 @@ A secure, server-hosted web application for generating Hillmann Site Observation
 ### Prerequisites
 
 - **Docker Desktop** (includes Docker Compose)
-- **OpenAI API Key** (for AI features)
+- **~6GB disk space** for AI models
 
-### 1. Configure Environment
+### 1. Start All Services
 
 ```bash
 cd sor-ai-system
-
-# Create backend environment file
-cat > backend/.env << EOF
-DATABASE_URL=postgresql+asyncpg://postgres:postgres@db:5432/sor_ai
-SECRET_KEY=your-secret-key-change-in-production
-OPENAI_API_KEY=sk-your-openai-api-key-here
-STORAGE_PATH=/app/storage
-CORS_ORIGINS=http://localhost:3000,http://127.0.0.1:3000
-EOF
+docker-compose up -d --build
 ```
 
-### 2. Start with Docker Compose
+### 2. Download AI Models (One-Time Setup)
 
 ```bash
-docker-compose up -d --build
+# Download chat model (~2GB)
+docker exec sor_ollama ollama pull llama3.2
+
+# Download embedding model (~274MB)
+docker exec sor_ollama ollama pull nomic-embed-text
 ```
 
 ### 3. Verify All Services Are Running
@@ -82,10 +82,11 @@ Expected output:
 NAME           SERVICE    STATUS           PORTS
 sor_backend    backend    Up               0.0.0.0:8000->8000/tcp
 sor_frontend   frontend   Up               0.0.0.0:3000->3000/tcp
+sor_ollama     ollama     Up               0.0.0.0:11434->11434/tcp
 sor_postgres   db         Up (healthy)     0.0.0.0:5432->5432/tcp
 ```
 
-### 4. Access the Application
+### 5. Access the Application
 
 | Service | URL | Description |
 |---------|-----|-------------|
@@ -261,9 +262,12 @@ sor-ai-system/
 ### Backend
 | Variable | Description | Default |
 |----------|-------------|---------|
-| `DATABASE_URL` | PostgreSQL connection string | Required |
-| `SECRET_KEY` | JWT signing key | Required |
-| `OPENAI_API_KEY` | OpenAI API key | Required |
+| `DATABASE_URL` | PostgreSQL connection string | Auto-configured |
+| `SECRET_KEY` | JWT signing key | Auto-generated |
+| `USE_LOCAL_LLM` | Use local Ollama instead of OpenAI | `true` |
+| `OLLAMA_HOST` | Ollama server URL | `http://ollama:11434` |
+| `LOCAL_MODEL` | Chat model name | `llama3.2` |
+| `LOCAL_EMBEDDING_MODEL` | Embedding model name | `nomic-embed-text` |
 | `STORAGE_PATH` | File storage path | `./storage` |
 | `CORS_ORIGINS` | Allowed origins | `http://localhost:3000` |
 
@@ -271,6 +275,23 @@ sor-ai-system/
 | Variable | Description | Default |
 |----------|-------------|---------|
 | `NEXT_PUBLIC_API_URL` | Backend API URL | `http://localhost:8000/api/v1` |
+
+## Default Login
+
+| Field | Value |
+|-------|-------|
+| Email | `admin@hillmann.com` |
+| Password | `admin123` |
+
+**Change the default password after first login.**
+
+## User Roles
+
+| Role | Permissions |
+|------|-------------|
+| **ADMIN** | Full system access, user management |
+| **MANAGER** | Review and approve reports |
+| **INSPECTOR** | Upload photos, write narratives |
 
 ## License
 

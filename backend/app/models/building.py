@@ -21,4 +21,4 @@ class Building(Base, TimestampMixin):
 
     # Relationships
     site = relationship("Site", back_populates="buildings")
-    images = relationship("Image", back_populates="building")
+    images = relationship("Image", back_populates="building", foreign_keys="[Image.building_id]")

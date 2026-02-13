@@ -13,6 +13,11 @@ async def lifespan(app: FastAPI):
     # Startup
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
+    
+    # Seed default admin user
+    from app.db.seed import seed_admin_user
+    await seed_admin_user()
+    
     yield
     # Shutdown
     await engine.dispose()
