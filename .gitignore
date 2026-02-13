@@ -1,0 +1,50 @@
+# Dependencies
+node_modules/
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Environment files
+.env
+.env.local
+*.env
+
+# IDE
+.idea/
+.vscode/
+*.swp
+
+# Build
+.next/
+dist/
+build/
+*.egg-info/
+
+# Storage (keep structure, ignore contents)
+storage/photos/*
+storage/pdfs/*
+storage/reports/*
+storage/exports/*
+!storage/.gitkeep
+!storage/**/.gitkeep
+
+# Logs
+*.log
+logs/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Docker
+.docker/
+
+# Testing
+.coverage
+htmlcov/
+.pytest_cache/
+
+# Misc
+*.bak
+*.tmp
