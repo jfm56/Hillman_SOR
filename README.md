@@ -1,4 +1,4 @@
-# SOR AI System
+# Hillmann AI System
 
 A secure, **fully local** web application for generating Hillmann Site Observation Reports (SOR) using AI-powered image analysis, document parsing, and style-learning draft generation.
 

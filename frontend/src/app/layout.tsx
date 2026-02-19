@@ -7,7 +7,7 @@ import { Sidebar } from "@/components/layout/sidebar";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "SOR AI System",
+  title: "Hillmann AI System",
   description: "Site Observation Report AI Assistant",
 };
 

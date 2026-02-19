@@ -30,7 +30,7 @@ export function Sidebar() {
   return (
     <div className="flex flex-col w-64 bg-white border-r">
       <div className="p-6 border-b">
-        <h1 className="text-xl font-bold text-blue-600">SOR AI System</h1>
+        <h1 className="text-xl font-bold text-blue-600">Hillmann AI System</h1>
         <p className="text-xs text-gray-500">Hillmann Consulting</p>
       </div>
 

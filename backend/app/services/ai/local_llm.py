@@ -53,7 +53,7 @@ async def generate_completion(
         messages.append({"role": "system", "content": system_prompt})
     messages.append({"role": "user", "content": prompt})
     
-    async with httpx.AsyncClient(timeout=120.0) as client:
+    async with httpx.AsyncClient(timeout=httpx.Timeout(300.0, read=300.0)) as client:
         response = await client.post(
             f"{settings.OLLAMA_HOST}/api/chat",
             json={
@@ -82,7 +82,7 @@ async def generate_chat_completion(
     """Generate a chat completion from message history."""
     model = model or settings.LOCAL_MODEL
     
-    async with httpx.AsyncClient(timeout=120.0) as client:
+    async with httpx.AsyncClient(timeout=httpx.Timeout(300.0, read=300.0)) as client:
         response = await client.post(
             f"{settings.OLLAMA_HOST}/api/chat",
             json={

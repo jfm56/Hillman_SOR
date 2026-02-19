@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { api } from "@/lib/api";
-import { User, Lock, Bell, Database, Shield } from "lucide-react";
+import { User, Lock, Bell, Database, Shield, FileText, ChevronRight } from "lucide-react";
+import Link from "next/link";
 
 interface UserProfile {
   id: string;
@@ -76,6 +77,25 @@ export default function SettingsPage() {
   return (
     <div className="max-w-4xl mx-auto space-y-6">
       <h1 className="text-2xl font-bold text-gray-900">Settings</h1>
+
+      {/* Report Templates */}
+      <Link
+        href="/settings/templates"
+        className="block bg-white rounded-xl border p-6 hover:shadow-md transition-shadow"
+      >
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-purple-100 rounded-lg">
+              <FileText className="w-5 h-5 text-purple-600" />
+            </div>
+            <div>
+              <h2 className="text-lg font-semibold">Report Templates</h2>
+              <p className="text-sm text-gray-500">Upload sample reports to define the output format</p>
+            </div>
+          </div>
+          <ChevronRight className="w-5 h-5 text-gray-400" />
+        </div>
+      </Link>
 
       {/* Profile Section */}
       <div className="bg-white rounded-xl border p-6">

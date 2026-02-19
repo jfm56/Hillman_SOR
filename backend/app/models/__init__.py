@@ -7,6 +7,7 @@ from app.models.document import Document
 from app.models.report import Report, ReportSection, ReportStatus
 from app.models.audit import AuditLog, AIInteractionLog
 from app.models.chat import ChatSession, ChatMessage
+from app.models.template import ReportTemplate
 
 __all__ = [
     "User",
@@ -24,4 +25,5 @@ __all__ = [
     "AIInteractionLog",
     "ChatSession",
     "ChatMessage",
+    "ReportTemplate",
 ]

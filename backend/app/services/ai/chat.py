@@ -1,5 +1,7 @@
+import time
 from typing import List, Optional
 from uuid import UUID
+from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.config import settings
 
 
@@ -28,8 +30,11 @@ async def generate_chat_response(
     context: Optional[dict] = None,
     project_id: Optional[UUID] = None,
     report_id: Optional[UUID] = None,
+    user_id: Optional[UUID] = None,
+    db: Optional[AsyncSession] = None,
 ) -> dict:
-    """Generate a chat response using local LLM or OpenAI."""
+    """Generate a chat response using local LLM or OpenAI. Logs interaction for learning."""
+    start_time = time.time()
     
     # Build system message with context
     system_content = SYSTEM_PROMPT
@@ -51,15 +56,14 @@ async def generate_chat_response(
         })
     
     # Use local LLM if configured
+    input_tokens = 0
+    output_tokens = 0
+    
     if settings.USE_LOCAL_LLM:
         from app.services.ai.local_llm import generate_chat_completion
         
         content = await generate_chat_completion(chat_messages)
-        return {
-            "content": content,
-            "tokens_used": 0,  # Ollama doesn't report tokens the same way
-            "model": f"local:{settings.LOCAL_MODEL}",
-        }
+        model_used = f"local:{settings.LOCAL_MODEL}"
     else:
         # Fallback to OpenAI
         from app.services.ai.openai_client import get_openai_client
@@ -72,8 +76,38 @@ async def generate_chat_response(
             temperature=0.7,
         )
         
-        return {
-            "content": response.choices[0].message.content,
-            "tokens_used": response.usage.total_tokens,
-            "model": settings.OPENAI_MODEL,
-        }
+        content = response.choices[0].message.content
+        input_tokens = response.usage.prompt_tokens
+        output_tokens = response.usage.completion_tokens
+        model_used = settings.OPENAI_MODEL
+    
+    # Calculate latency
+    latency_ms = int((time.time() - start_time) * 1000)
+    
+    # Log interaction for learning (if db session provided)
+    if db is not None:
+        from app.services.ai.ai_learning import log_ai_interaction
+        
+        # Get last user message as prompt
+        user_message = messages[-1]["content"] if messages else ""
+        
+        await log_ai_interaction(
+            db=db,
+            user_id=user_id,
+            interaction_type="chat",
+            model_name=model_used,
+            prompt=user_message[:2000],
+            response=content,
+            input_tokens=input_tokens,
+            output_tokens=output_tokens,
+            latency_ms=latency_ms,
+            project_id=project_id,
+            report_id=report_id,
+            status="success",
+        )
+    
+    return {
+        "content": content,
+        "tokens_used": input_tokens + output_tokens,
+        "model": model_used,
+    }

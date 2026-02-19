@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { ArrowLeft, Save, Sparkles, CheckCircle } from "lucide-react";
+import ReportChatPanel from "@/components/ReportChatPanel";
 
 interface ReportSection {
   id: string;
@@ -172,6 +173,15 @@ export default function ReportDetailPage() {
           </div>
         </div>
       </div>
+
+      {/* AI Chat Assistant */}
+      <ReportChatPanel
+        reportId={report.id}
+        projectId={report.project_id}
+        reportNumber={report.report_number}
+        currentSection={activeSection || undefined}
+        selectedText={editContent || undefined}
+      />
 
       {/* Sections */}
       <div className="space-y-4">

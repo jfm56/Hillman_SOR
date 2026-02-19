@@ -207,12 +207,14 @@ async def send_message(
     ]
     history.append({"role": "user", "content": message_data.content})
     
-    # Generate AI response
+    # Generate AI response (logged for learning)
     ai_response = await generate_chat_response(
         messages=history,
         context=message_data.context,
         project_id=session.project_id,
         report_id=session.report_id,
+        user_id=current_user.id,
+        db=db,
     )
     
     # Save AI message

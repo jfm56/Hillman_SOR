@@ -1,4 +1,4 @@
-# SOR AI System Architecture
+# Hillmann AI System Architecture
 
 ## System Overview
 

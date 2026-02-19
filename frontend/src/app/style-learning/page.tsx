@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Upload, FileText, Trash2, BookOpen, CheckCircle, AlertCircle } from "lucide-react";
+import { api } from "@/lib/api";
 
 interface StyleSample {
   id: string;
@@ -39,13 +40,8 @@ export default function StyleLearningPage() {
 
   const loadSamples = async () => {
     try {
-      const response = await fetch("/api/v1/style/samples", {
-        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
-      });
-      if (response.ok) {
-        const data = await response.json();
-        setSamples(data);
-      }
+      const data = await api.getStyleSamples();
+      setSamples(data);
     } catch (err) {
       console.error("Failed to load samples:", err);
     } finally {
@@ -61,27 +57,12 @@ export default function StyleLearningPage() {
     setError("");
     setResult(null);
 
-    const formData = new FormData();
-    formData.append("file", file);
-    formData.append("source_name", sourceName || file.name);
-
     try {
-      const response = await fetch("/api/v1/style/upload-file", {
-        method: "POST",
-        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
-        body: formData,
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        setResult(data);
-        loadSamples();
-      } else {
-        const err = await response.json();
-        setError(err.detail || "Upload failed");
-      }
-    } catch (err) {
-      setError("Failed to upload file");
+      const data = await api.uploadStyleFile(file, sourceName || file.name);
+      setResult(data);
+      loadSamples();
+    } catch (err: any) {
+      setError(err.response?.data?.detail || "Failed to upload file");
     } finally {
       setUploading(false);
     }
@@ -96,31 +77,13 @@ export default function StyleLearningPage() {
     setResult(null);
 
     try {
-      const response = await fetch("/api/v1/style/upload-text", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
-        },
-        body: JSON.stringify({
-          content: textContent,
-          source_name: sourceName || "Pasted Report",
-          report_type: "sor",
-        }),
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        setResult(data);
-        setTextContent("");
-        setSourceName("");
-        loadSamples();
-      } else {
-        const err = await response.json();
-        setError(err.detail || "Processing failed");
-      }
-    } catch (err) {
-      setError("Failed to process text");
+      const data = await api.uploadStyleText(textContent, sourceName || "Pasted Report", "sor");
+      setResult(data);
+      setTextContent("");
+      setSourceName("");
+      loadSamples();
+    } catch (err: any) {
+      setError(err.response?.data?.detail || "Failed to process text");
     } finally {
       setUploading(false);
     }
@@ -130,13 +93,8 @@ export default function StyleLearningPage() {
     if (!confirm("Delete this style sample?")) return;
 
     try {
-      const response = await fetch(`/api/v1/style/samples/${sampleId}`, {
-        method: "DELETE",
-        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
-      });
-      if (response.ok) {
-        loadSamples();
-      }
+      await api.deleteStyleSample(sampleId);
+      loadSamples();
     } catch (err) {
       console.error("Failed to delete sample:", err);
     }

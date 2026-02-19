@@ -2,16 +2,17 @@
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from typing import List, Optional
+from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models.user import User
+from app.models.user import User, UserRole
 from app.core.security import get_current_active_user, require_role
 from app.core.config import settings
+from app.db.session import get_db
 from app.services.ai.local_llm import (
     check_ollama_connection,
     pull_model,
     generate_completion,
 )
-from app.models.user import UserRole
 
 router = APIRouter()
 
@@ -95,4 +96,20 @@ async def list_required_models(
             },
         ],
         "note": "Run the pull commands to download models before using AI features",
+    }
+
+
+@router.get("/learning-stats")
+async def get_learning_stats(
+    current_user: User = Depends(get_current_active_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Get statistics about AI learning from logged interactions."""
+    from app.services.ai.ai_learning import get_learning_stats
+    
+    stats = await get_learning_stats(db)
+    return {
+        "learning_enabled": True,
+        "storage": "PostgreSQL (ai_interaction_logs table)",
+        **stats,
     }

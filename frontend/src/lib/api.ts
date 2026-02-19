@@ -199,4 +199,65 @@ export const api = {
     });
     return data;
   },
+
+  // Templates
+  getTemplates: async (activeOnly: boolean = true) => {
+    const { data } = await client.get("/templates", { params: { active_only: activeOnly } });
+    return data;
+  },
+
+  uploadTemplate: async (file: File, name: string, description: string, templateType: string, setAsDefault: boolean) => {
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("name", name);
+    formData.append("description", description);
+    formData.append("template_type", templateType);
+    formData.append("set_as_default", String(setAsDefault));
+    
+    const { data } = await client.post("/templates/upload", formData, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
+    return data;
+  },
+
+  setTemplateDefault: async (templateId: string) => {
+    const { data } = await client.put(`/templates/${templateId}`, { is_default: true });
+    return data;
+  },
+
+  deleteTemplate: async (templateId: string) => {
+    const { data } = await client.delete(`/templates/${templateId}`);
+    return data;
+  },
+
+  // Style Learning
+  getStyleSamples: async () => {
+    const { data } = await client.get("/style/samples");
+    return data;
+  },
+
+  uploadStyleFile: async (file: File, sourceName: string) => {
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("source_name", sourceName);
+    
+    const { data } = await client.post("/style/upload-file", formData, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
+    return data;
+  },
+
+  uploadStyleText: async (content: string, sourceName: string, reportType: string = "sor") => {
+    const { data } = await client.post("/style/upload-text", {
+      content,
+      source_name: sourceName,
+      report_type: reportType,
+    });
+    return data;
+  },
+
+  deleteStyleSample: async (sampleId: string) => {
+    const { data } = await client.delete(`/style/samples/${sampleId}`);
+    return data;
+  },
 };
