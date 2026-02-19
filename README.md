@@ -293,6 +293,103 @@ sor-ai-system/
 | **MANAGER** | Review and approve reports |
 | **INSPECTOR** | Upload photos, write narratives |
 
+## Server Deployment
+
+### Requirements
+
+| Resource | Minimum | Recommended |
+|----------|---------|-------------|
+| CPU      | 4 cores | 8 cores     |
+| RAM      | 8 GB    | 16 GB       |
+| Storage  | 20 GB   | 50 GB       |
+| OS       | Ubuntu 20.04+ | Ubuntu 22.04 |
+
+### Quick Deploy
+
+```bash
+# SSH into your server
+ssh user@YOUR_SERVER_IP
+
+# Clone the repository
+git clone https://github.com/jfm56/Hillman_SOR.git hillmann-ai
+cd hillmann-ai
+
+# Run the deployment script
+./deploy.sh
+```
+
+The script will:
+1. Install Docker if needed
+2. Generate secure passwords and secrets
+3. Prompt you to set your server IP
+4. Build and start all services
+5. Pull the AI models (~2GB)
+
+### Access After Deployment
+
+- **URL**: `http://YOUR_SERVER_IP`
+- **Login**: `admin@hillmann.com` / `admin123`
+
+⚠️ **Change the admin password after first login!**
+
+### Enable Auto-Deploy (CI/CD)
+
+Set up automatic deployment when you push to GitHub:
+
+```bash
+# On the server, run:
+./webhook/setup.sh
+```
+
+This outputs a **webhook secret**. Then configure GitHub:
+
+1. Go to: https://github.com/jfm56/Hillman_SOR/settings/hooks
+2. Click **Add webhook**
+3. **Payload URL**: `http://YOUR_SERVER_IP:9000/webhook`
+4. **Content type**: `application/json`
+5. **Secret**: paste the secret from the setup script
+6. **Events**: Just the push event
+7. Click **Add webhook**
+
+Now every `git push` automatically deploys to the server.
+
+### Manual Update (Without Auto-Deploy)
+
+```bash
+ssh user@YOUR_SERVER_IP
+cd hillmann-ai
+git pull
+docker compose -f docker-compose.prod.yml up -d --build
+```
+
+### Useful Commands
+
+```bash
+# View logs
+docker compose -f docker-compose.prod.yml logs -f
+
+# View specific service
+docker compose -f docker-compose.prod.yml logs -f backend
+
+# Restart services
+docker compose -f docker-compose.prod.yml restart
+
+# Stop all services
+docker compose -f docker-compose.prod.yml down
+
+# Full reset (deletes data)
+docker compose -f docker-compose.prod.yml down -v
+```
+
+### Firewall Setup
+
+```bash
+sudo ufw allow 80/tcp    # HTTP
+sudo ufw allow 443/tcp   # HTTPS (if using SSL)
+sudo ufw allow 9000/tcp  # Webhook (if using auto-deploy)
+sudo ufw enable
+```
+
 ## License
 
 Proprietary - Hillmann Consulting
