@@ -86,7 +86,7 @@ echo "==========================================${NC}"
 echo ""
 docker compose -f docker-compose.prod.yml ps
 echo ""
-echo -e "Access the application at: ${GREEN}http://$(curl -s ifconfig.me 2>/dev/null || echo 'YOUR_SERVER_IP')${NC}"
+echo -e "Access the application at: ${GREEN}http://192.168.171.61${NC}"
 echo ""
 echo "Default admin login:"
 echo "  Email: admin@hillmann.com"
