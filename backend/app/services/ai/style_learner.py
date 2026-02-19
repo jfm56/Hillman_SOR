@@ -1,16 +1,17 @@
 """
 Style Learning Service - Learn writing patterns from uploaded reports.
 Supports both local LLM (Ollama) and OpenAI for processing.
+Uses database for persistent storage.
 """
 import uuid
 import json
 from typing import List, Optional
 from datetime import datetime
+from sqlalchemy import select, delete
+from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.config import settings
-
-
-# In-memory store for style samples (replace with database in production)
-_style_samples: List[dict] = []
+from app.db.session import AsyncSessionLocal
+from app.models.style_sample import StyleSample
 
 
 async def get_embedding_local_or_remote(text: str) -> List[float]:
@@ -88,27 +89,34 @@ Return JSON with this structure:
         )
         analysis = json.loads(response.choices[0].message.content)
     
-    # Store each section with embeddings
+    # Store each section with embeddings in database
     sample_id = str(uuid.uuid4())
     stored_sections = []
     
-    for section in analysis.get("sections", []):
-        if section.get("content"):
-            embedding = await get_embedding_local_or_remote(section["content"])
-            section_data = {
-                "id": str(uuid.uuid4()),
-                "sample_id": sample_id,
-                "section_type": section["type"],
-                "content": section["content"],
-                "embedding": embedding,
-                "source_name": source_name,
-                "created_at": datetime.utcnow().isoformat(),
-            }
-            _style_samples.append(section_data)
-            stored_sections.append({
-                "type": section["type"],
-                "preview": section["content"][:200] + "..." if len(section["content"]) > 200 else section["content"]
-            })
+    async with AsyncSessionLocal() as db:
+        for section in analysis.get("sections", []):
+            if section.get("content"):
+                embedding = await get_embedding_local_or_remote(section["content"])
+                
+                style_sample = StyleSample(
+                    id=str(uuid.uuid4()),
+                    sample_id=sample_id,
+                    source_name=source_name,
+                    section_type=section["type"],
+                    content=section["content"],
+                    embedding=embedding,
+                    style_characteristics=analysis.get("style_characteristics", {}),
+                    common_phrases=analysis.get("common_phrases", []),
+                    terminology=analysis.get("terminology", []),
+                )
+                db.add(style_sample)
+                
+                stored_sections.append({
+                    "type": section["type"],
+                    "preview": section["content"][:200] + "..." if len(section["content"]) > 200 else section["content"]
+                })
+        
+        await db.commit()
     
     return {
         "sample_id": sample_id,
@@ -127,33 +135,38 @@ async def get_style_examples(
     top_k: int = 3,
 ) -> List[dict]:
     """Get style examples for a section type, optionally matching context."""
-    candidates = [s for s in _style_samples if s["section_type"] == section_type]
-    
-    if not candidates:
-        return []
-    
-    if context:
-        query_embedding = await get_embedding_local_or_remote(context)
-        from app.services.ai.rag import cosine_similarity
-        results = []
-        for sample in candidates:
-            similarity = cosine_similarity(query_embedding, sample["embedding"])
-            results.append({
-                "content": sample["content"],
-                "source": sample["source_name"],
-                "similarity": round(similarity, 4),
-            })
-        results.sort(key=lambda x: x["similarity"], reverse=True)
-        return results[:top_k]
-    else:
-        return [
-            {
-                "content": s["content"],
-                "source": s["source_name"],
-                "similarity": 1.0,
-            }
-            for s in candidates[:top_k]
-        ]
+    async with AsyncSessionLocal() as db:
+        result = await db.execute(
+            select(StyleSample).where(StyleSample.section_type == section_type)
+        )
+        candidates = result.scalars().all()
+        
+        if not candidates:
+            return []
+        
+        if context:
+            query_embedding = await get_embedding_local_or_remote(context)
+            from app.services.ai.rag import cosine_similarity
+            results = []
+            for sample in candidates:
+                if sample.embedding:
+                    similarity = cosine_similarity(query_embedding, list(sample.embedding))
+                    results.append({
+                        "content": sample.content,
+                        "source": sample.source_name,
+                        "similarity": round(similarity, 4),
+                    })
+            results.sort(key=lambda x: x["similarity"], reverse=True)
+            return results[:top_k]
+        else:
+            return [
+                {
+                    "content": s.content,
+                    "source": s.source_name,
+                    "similarity": 1.0,
+                }
+                for s in candidates[:top_k]
+            ]
 
 
 async def build_style_prompt(section_type: str, context: str = "") -> str:
@@ -177,30 +190,35 @@ async def build_style_prompt(section_type: str, context: str = "") -> str:
     return "\n".join(parts)
 
 
-def get_all_samples() -> List[dict]:
+async def get_all_samples() -> List[dict]:
     """Get all stored style samples (grouped by sample_id)."""
-    samples_by_id = {}
-    
-    for section in _style_samples:
-        sample_id = section["sample_id"]
-        if sample_id not in samples_by_id:
-            samples_by_id[sample_id] = {
-                "id": sample_id,
-                "source_name": section["source_name"],
-                "created_at": section["created_at"],
-                "sections": [],
-            }
-        samples_by_id[sample_id]["sections"].append({
-            "type": section["section_type"],
-            "preview": section["content"][:100] + "..." if len(section["content"]) > 100 else section["content"],
-        })
-    
-    return list(samples_by_id.values())
+    async with AsyncSessionLocal() as db:
+        result = await db.execute(select(StyleSample).order_by(StyleSample.created_at.desc()))
+        all_sections = result.scalars().all()
+        
+        samples_by_id = {}
+        for section in all_sections:
+            sample_id = section.sample_id
+            if sample_id not in samples_by_id:
+                samples_by_id[sample_id] = {
+                    "id": sample_id,
+                    "source_name": section.source_name,
+                    "created_at": section.created_at.isoformat() if section.created_at else "",
+                    "sections": [],
+                }
+            samples_by_id[sample_id]["sections"].append({
+                "type": section.section_type,
+                "preview": section.content[:100] + "..." if len(section.content) > 100 else section.content,
+            })
+        
+        return list(samples_by_id.values())
 
 
-def delete_sample(sample_id: str) -> bool:
+async def delete_sample(sample_id: str) -> bool:
     """Delete a style sample and all its sections."""
-    global _style_samples
-    original_count = len(_style_samples)
-    _style_samples = [s for s in _style_samples if s["sample_id"] != sample_id]
-    return len(_style_samples) < original_count
+    async with AsyncSessionLocal() as db:
+        result = await db.execute(
+            delete(StyleSample).where(StyleSample.sample_id == sample_id)
+        )
+        await db.commit()
+        return result.rowcount > 0

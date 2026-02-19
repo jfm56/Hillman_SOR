@@ -115,17 +115,17 @@ async def list_style_samples(
     current_user: User = Depends(get_current_active_user),
 ):
     """List all uploaded style samples."""
-    samples = get_all_samples()
+    samples = await get_all_samples()
     return [StyleSampleResponse(**s) for s in samples]
 
 
 @router.delete("/samples/{sample_id}")
-async def delete_style_sample(
+async def delete_style_sample_endpoint(
     sample_id: str,
     current_user: User = Depends(get_current_active_user),
 ):
     """Delete a style sample."""
-    if delete_sample(sample_id):
+    if await delete_sample(sample_id):
         return {"message": "Sample deleted successfully"}
     raise HTTPException(status_code=404, detail="Sample not found")
 
