@@ -1,0 +1,17 @@
+[Unit]
+Description=Hillmann AI Auto-Deploy Webhook
+After=network.target docker.service
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/root/hillmann-ai/webhook
+Environment=WEBHOOK_SECRET=your-webhook-secret-here
+Environment=DEPLOY_PATH=/root/hillmann-ai
+Environment=WEBHOOK_PORT=9000
+ExecStart=/usr/bin/python3 /root/hillmann-ai/webhook/server.py
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target
