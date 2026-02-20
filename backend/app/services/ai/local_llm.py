@@ -63,6 +63,8 @@ async def generate_completion(
                 "options": {
                     "temperature": temperature,
                     "num_predict": max_tokens,
+                    "num_ctx": 2048,
+                    "num_thread": 8,
                 },
             },
         )
@@ -91,6 +93,8 @@ async def generate_chat_completion(
                 "stream": False,
                 "options": {
                     "temperature": temperature,
+                    "num_ctx": 4096,
+                    "num_thread": 8,
                 },
             },
         )

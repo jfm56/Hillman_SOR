@@ -31,31 +31,12 @@ async def process_sample_report(
 ) -> dict:
     """Process an uploaded report to extract style patterns."""
     
-    system_prompt = """You are an expert at analyzing technical writing style in construction reports.
-Extract the following from the report:
-1. Key sections and their content
-2. Writing style characteristics (formal/informal, passive/active voice, etc.)
-3. Common phrases and terminology used
-4. Sentence structure patterns
+    # Simplified prompt for faster processing
+    system_prompt = """Extract sections from this construction report. Return only valid JSON:
+{"sections":[{"type":"summary","content":"..."}],"style":{"voice":"passive","tone":"formal"},"phrases":[],"terms":[]}"""
 
-Return JSON with this structure:
-{
-  "sections": [
-    {"type": "executive_summary", "content": "..."},
-    {"type": "building_status", "content": "..."},
-    {"type": "budget_summary", "content": "..."},
-    {"type": "recommendations", "content": "..."}
-  ],
-  "style_characteristics": {
-    "voice": "passive|active|mixed",
-    "tone": "formal|technical|conversational",
-    "sentence_length": "short|medium|long|varied"
-  },
-  "common_phrases": ["phrase 1", "phrase 2"],
-  "terminology": ["term 1", "term 2"]
-}"""
-
-    user_prompt = f"Analyze this Site Observation Report:\n\n{content[:15000]}"
+    # Limit text to 5000 chars for faster processing
+    user_prompt = f"Extract sections from this report:\n\n{content[:5000]}"
     
     # Use local LLM or OpenAI
     if settings.USE_LOCAL_LLM:
@@ -63,6 +44,8 @@ Return JSON with this structure:
         response_text = await generate_completion(
             prompt=user_prompt,
             system_prompt=system_prompt,
+            model=settings.LOCAL_FAST_MODEL,  # Use fast model for style analysis
+            max_tokens=1000,
         )
         # Parse JSON from response
         try:

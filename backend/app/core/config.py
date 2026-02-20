@@ -42,6 +42,7 @@ class Settings(BaseSettings):
     USE_LOCAL_LLM: bool = True
     OLLAMA_HOST: str = "http://localhost:11434"
     LOCAL_MODEL: str = "llama3.2"
+    LOCAL_FAST_MODEL: str = "qwen2.5:1.5b"  # Faster model for simple tasks
     LOCAL_EMBEDDING_MODEL: str = "nomic-embed-text"
     
     # RAG Settings
