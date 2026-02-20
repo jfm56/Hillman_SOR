@@ -6,6 +6,7 @@ from app.core.config import settings
 from app.api.v1.router import api_router
 from app.db.session import engine
 from app.db.base import Base
+from app.middleware.memory_logging import MemoryLoggingMiddleware
 
 
 @asynccontextmanager
@@ -30,6 +31,9 @@ app = FastAPI(
     openapi_url=f"{settings.API_V1_STR}/openapi.json",
     lifespan=lifespan,
 )
+
+# Memory logging middleware (must be added before CORS)
+app.add_middleware(MemoryLoggingMiddleware)
 
 # CORS middleware
 app.add_middleware(

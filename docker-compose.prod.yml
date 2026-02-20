@@ -39,6 +39,7 @@ services:
       context: ./backend
       dockerfile: Dockerfile
     container_name: sor_backend
+    mem_limit: 1g
     environment:
       - DATABASE_URL=postgresql+asyncpg://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-changeme}@db:5432/${POSTGRES_DB:-sor_ai}
       - SECRET_KEY=${SECRET_KEY}
@@ -64,15 +65,38 @@ services:
       args:
         - NEXT_PUBLIC_API_URL=${API_URL:-http://localhost:8000}/api/v1
     container_name: sor_frontend
+    mem_limit: 512m
     environment:
       - NEXT_PUBLIC_API_URL=${API_URL:-http://localhost:8000}/api/v1
     depends_on:
       - backend
     restart: unless-stopped
 
+  worker:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: sor_worker
+    command: python worker.py
+    mem_limit: 1g
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-changeme}@db:5432/${POSTGRES_DB:-sor_ai}
+      - OLLAMA_HOST=http://ollama:11434
+      - USE_LOCAL_LLM=true
+      - STORAGE_PATH=/app/storage
+    volumes:
+      - ./storage:/app/storage
+    depends_on:
+      db:
+        condition: service_healthy
+      ollama:
+        condition: service_started
+    restart: unless-stopped
+
   nginx:
     image: nginx:alpine
     container_name: sor_nginx
+    mem_limit: 128m
     ports:
       - "192.168.171.61:80:80"
       - "443:443"
