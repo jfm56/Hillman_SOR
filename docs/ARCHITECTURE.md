@@ -1,4 +1,4 @@
-# Hillmann AI System Architecture
+# Hillmann Consulting LLC. AI Architecture
 
 ## System Overview
 

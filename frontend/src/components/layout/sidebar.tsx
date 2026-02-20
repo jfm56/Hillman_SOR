@@ -30,8 +30,8 @@ export function Sidebar() {
   return (
     <div className="flex flex-col w-64 bg-white border-r">
       <div className="p-6 border-b">
-        <h1 className="text-xl font-bold text-blue-600">Hillmann AI System</h1>
-        <p className="text-xs text-gray-500">Hillmann Consulting</p>
+        <h1 className="text-xl font-bold text-blue-600">Hillmann Consulting</h1>
+        <p className="text-xs text-gray-500">LLC. AI System</p>
       </div>
 
       <nav className="flex-1 p-4 space-y-1">

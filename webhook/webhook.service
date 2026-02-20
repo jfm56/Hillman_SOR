@@ -1,5 +1,5 @@
 [Unit]
-Description=Hillmann AI Auto-Deploy Webhook
+Description=Hillmann Consulting LLC. AI Auto-Deploy Webhook
 After=network.target docker.service
 
 [Service]

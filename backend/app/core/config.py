@@ -5,7 +5,7 @@ import os
 
 
 class Settings(BaseSettings):
-    PROJECT_NAME: str = "Hillmann AI System"
+    PROJECT_NAME: str = "Hillmann Consulting LLC. AI"
     API_V1_STR: str = "/api/v1"
     
     # Security

@@ -1,6 +1,6 @@
-# Hillmann AI System
+# Hillmann Consulting LLC. AI
 
-A secure, **fully local** web application for generating Hillmann Site Observation Reports (SOR) using AI-powered image analysis, document parsing, and style-learning draft generation.
+A secure, **fully local** web application for generating Site Observation Reports (SOR) using AI-powered image analysis, document parsing, and style-learning draft generation.
 
 **🔒 Privacy First**: All AI processing runs locally using Ollama - no data ever leaves your network.
 
@@ -283,7 +283,6 @@ sor-ai-system/
 | Email | `admin@hillmann.com` |
 | Password | `admin123` |
 
-**Change the default password after first login.**
 
 ## User Roles
 

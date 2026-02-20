@@ -2,7 +2,7 @@
 set -e
 
 echo "=========================================="
-echo "  Hillmann AI System - Server Deployment"
+echo "  Hillmann Consulting LLC. AI - Server Deployment"
 echo "=========================================="
 
 # Colors
