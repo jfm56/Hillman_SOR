@@ -47,7 +47,7 @@ services:
       - USE_LOCAL_LLM=true
       - LOCAL_MODEL=llama3.2
       - STORAGE_PATH=/app/storage
-      - CORS_ORIGINS=${CORS_ORIGINS:-http://localhost:3000}
+      - CORS_ORIGINS=http://192.168.171.61,http://localhost:3000,http://localhost
     volumes:
       - ./storage:/app/storage
       - ./models:/app/models
@@ -63,11 +63,11 @@ services:
       context: ./frontend
       dockerfile: Dockerfile
       args:
-        - NEXT_PUBLIC_API_URL=${API_URL:-http://localhost:8000}/api/v1
+        - NEXT_PUBLIC_API_URL=/api/v1
     container_name: sor_frontend
     mem_limit: 512m
     environment:
-      - NEXT_PUBLIC_API_URL=${API_URL:-http://localhost:8000}/api/v1
+      - NEXT_PUBLIC_API_URL=/api/v1
     depends_on:
       - backend
     restart: unless-stopped
