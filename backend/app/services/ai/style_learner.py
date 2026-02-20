@@ -77,6 +77,20 @@ async def process_sample_report(
     stored_sections = []
     
     async with AsyncSessionLocal() as db:
+        # Always store the raw content as a "raw_text" section for learning
+        raw_embedding = await get_embedding_local_or_remote(content[:2000])
+        raw_sample = StyleSample(
+            id=str(uuid.uuid4()),
+            sample_id=sample_id,
+            source_name=source_name,
+            report_type=report_type,
+            section_type="raw_text",
+            content=content[:8000],  # Store up to 8000 chars of raw text
+            embedding=raw_embedding,
+        )
+        db.add(raw_sample)
+        stored_sections.append({"type": "raw_text", "content": content[:500] + "..."})
+        
         for section in analysis.get("sections", []):
             if section.get("content"):
                 embedding = await get_embedding_local_or_remote(section["content"])

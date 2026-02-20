@@ -31,35 +31,41 @@ IMPORTANT: You have access to style samples that users have uploaded. When asked
 
 
 async def get_style_samples_context() -> str:
-    """Fetch style samples summary to include in chat context."""
+    """Fetch style samples with full content to include in chat context."""
     async with AsyncSessionLocal() as db:
         result = await db.execute(
-            select(StyleSample).order_by(StyleSample.created_at.desc()).limit(20)
+            select(StyleSample).order_by(StyleSample.created_at.desc()).limit(50)
         )
         samples = result.scalars().all()
         
         if not samples:
             return "No style samples have been uploaded yet."
         
-        # Group by sample_id
+        # Group by sample_id with full content
         samples_by_id = {}
         for s in samples:
             if s.sample_id not in samples_by_id:
                 samples_by_id[s.sample_id] = {
                     "name": s.source_name,
                     "type": s.report_type,
-                    "sections": []
+                    "sections": [],
+                    "raw_content": ""
                 }
             samples_by_id[s.sample_id]["sections"].append({
                 "type": s.section_type,
-                "content": s.content[:200]
+                "content": s.content  # Full content
             })
+            # Accumulate raw content for learning
+            samples_by_id[s.sample_id]["raw_content"] += s.content + "\n"
         
-        context = f"UPLOADED STYLE SAMPLES ({len(samples_by_id)} reports):\n"
+        context = f"LEARNED STYLE SAMPLES ({len(samples_by_id)} reports):\n"
+        context += "Use these samples to understand the writing style and terminology.\n\n"
+        
         for sid, data in samples_by_id.items():
-            context += f"\n- {data['name']} ({data['type']}):\n"
-            for sec in data["sections"][:3]:  # Limit sections shown
-                context += f"  [{sec['type']}]: {sec['content']}...\n"
+            context += f"=== {data['name']} ({data['type']}) ===\n"
+            for sec in data["sections"]:
+                context += f"[{sec['type']}]: {sec['content']}\n"
+            context += "\n"
         
         return context
 
