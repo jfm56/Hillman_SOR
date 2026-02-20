@@ -11,6 +11,7 @@ from app.models.project import Project, ProjectStatus
 from app.models.user import User
 from app.core.security import get_current_active_user
 from app.services.audit import log_action
+from app.services.notifications import notify_project_created
 
 router = APIRouter()
 
@@ -41,6 +42,8 @@ class ProjectResponse(BaseModel):
     description: Optional[str]
     status: str
     created_at: str
+    created_by_id: Optional[str] = None
+    created_by_name: Optional[str] = None
 
     class Config:
         from_attributes = True
@@ -55,7 +58,7 @@ async def list_projects(
     current_user: User = Depends(get_current_active_user),
 ):
     """List all projects with optional filtering."""
-    query = select(Project).order_by(Project.created_at.desc())
+    query = select(Project).options(selectinload(Project.created_by_user)).order_by(Project.created_at.desc())
     
     if status:
         query = query.where(Project.status == status)
@@ -74,6 +77,8 @@ async def list_projects(
             description=p.description,
             status=p.status.value,
             created_at=p.created_at.isoformat(),
+            created_by_id=str(p.created_by) if p.created_by else None,
+            created_by_name=p.created_by_user.full_name if p.created_by_user else None,
         )
         for p in projects
     ]
@@ -100,6 +105,14 @@ async def create_project(
     
     await log_action(db, current_user.id, "create", "project", project.id, after_data=project_data.model_dump())
     
+    # Send real-time notification to other users
+    await notify_project_created(
+        project_id=str(project.id),
+        project_name=project.name,
+        created_by_name=current_user.full_name,
+        exclude_user_id=str(current_user.id),
+    )
+    
     return ProjectResponse(
         id=str(project.id),
         name=project.name,
@@ -109,6 +122,8 @@ async def create_project(
         description=project.description,
         status=project.status.value,
         created_at=project.created_at.isoformat(),
+        created_by_id=str(current_user.id),
+        created_by_name=current_user.full_name,
     )
 
 
@@ -119,7 +134,11 @@ async def get_project(
     current_user: User = Depends(get_current_active_user),
 ):
     """Get project details."""
-    result = await db.execute(select(Project).where(Project.id == project_id))
+    result = await db.execute(
+        select(Project)
+        .options(selectinload(Project.created_by_user))
+        .where(Project.id == project_id)
+    )
     project = result.scalar_one_or_none()
     
     if not project:
@@ -134,6 +153,8 @@ async def get_project(
         description=project.description,
         status=project.status.value,
         created_at=project.created_at.isoformat(),
+        created_by_id=str(project.created_by) if project.created_by else None,
+        created_by_name=project.created_by_user.full_name if project.created_by_user else None,
     )
 
 

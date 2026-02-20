@@ -260,4 +260,20 @@ export const api = {
     const { data } = await client.delete(`/style/samples/${sampleId}`);
     return data;
   },
+
+  // Dashboard
+  getDashboardStats: async () => {
+    const { data } = await client.get("/dashboard/stats");
+    return data;
+  },
+
+  getRecentProjects: async (days: number = 7) => {
+    const { data } = await client.get("/dashboard/recent-projects", { params: { days } });
+    return data;
+  },
+
+  getUserActivity: async (limit: number = 20) => {
+    const { data } = await client.get("/dashboard/user-activity", { params: { limit } });
+    return data;
+  },
 };

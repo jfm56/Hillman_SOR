@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { api } from "@/lib/api";
-import { Plus, FolderOpen, Calendar, MapPin } from "lucide-react";
+import { Plus, FolderOpen, Calendar, User } from "lucide-react";
 
 interface Project {
   id: string;
@@ -12,6 +12,8 @@ interface Project {
   project_number: string;
   status: string;
   created_at: string;
+  created_by_id?: string;
+  created_by_name?: string;
 }
 
 export default function ProjectsPage() {
@@ -141,7 +143,13 @@ export default function ProjectsPage() {
             >
               <h3 className="font-semibold text-gray-900">{project.name}</h3>
               <p className="text-sm text-gray-500 mt-1">{project.client_name}</p>
-              <div className="flex items-center gap-4 mt-4 text-xs text-gray-400">
+              {project.created_by_name && (
+                <p className="text-xs text-gray-400 mt-2 flex items-center gap-1">
+                  <User className="w-3 h-3" />
+                  Created by {project.created_by_name}
+                </p>
+              )}
+              <div className="flex items-center gap-4 mt-2 text-xs text-gray-400">
                 <span className="flex items-center gap-1">
                   <Calendar className="w-3 h-3" />
                   {new Date(project.created_at).toLocaleDateString()}

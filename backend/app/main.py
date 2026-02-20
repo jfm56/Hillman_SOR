@@ -4,6 +4,7 @@ from contextlib import asynccontextmanager
 
 from app.core.config import settings
 from app.api.v1.router import api_router
+from app.api.v1.endpoints.websocket import router as websocket_router
 from app.db.session import engine
 from app.db.base import Base
 from app.middleware.memory_logging import MemoryLoggingMiddleware
@@ -46,6 +47,9 @@ app.add_middleware(
 
 # Include API router
 app.include_router(api_router, prefix=settings.API_V1_STR)
+
+# WebSocket router (no prefix for simpler client connection)
+app.include_router(websocket_router, prefix=settings.API_V1_STR, tags=["WebSocket"])
 
 
 @app.get("/health")
