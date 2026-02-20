@@ -398,6 +398,47 @@ docker compose -f docker-compose.prod.yml down -v
 | **Application Data** | /root/hillmann-ai/storage |
 | **Database** | Docker volume (sor_postgres_data) |
 
+### Remote Development (VS Code SSH)
+
+Develop directly on the server to save local CPU/memory.
+
+**1. Install Extension**
+- Open VS Code Extensions (`Cmd+Shift+X`)
+- Search and install: **Remote - SSH** (Microsoft)
+
+**2. Add SSH Config**
+Press `Cmd+Shift+P` → "Remote-SSH: Open SSH Configuration File" and add:
+```
+Host hillmann-server
+    HostName 192.168.171.61
+    User jim
+    ForwardAgent yes
+```
+
+**3. Connect**
+1. Connect to VPN first
+2. `Cmd+Shift+P` → "Remote-SSH: Connect to Host"
+3. Select **hillmann-server**
+4. Password: `Mullen1AI!`
+5. Open folder: `/home/jim/hillmann-ai`
+
+**4. Stop Local Docker** (free up Mac resources)
+```bash
+cd ~/Desktop/Mullen\ Analytics/Hillmann/sor-ai-system
+docker-compose down
+```
+
+**5. Server Commands** (in VS Code terminal)
+```bash
+# Rebuild and run
+docker compose -f docker-compose.prod.yml up -d --build
+
+# View logs
+docker compose -f docker-compose.prod.yml logs -f backend
+```
+
+Access app at: `http://192.168.171.61` (via VPN)
+
 ## License
 
 Proprietary - Hillmann Consulting
