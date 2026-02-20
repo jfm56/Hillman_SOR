@@ -2,7 +2,10 @@ import time
 from typing import List, Optional
 from uuid import UUID
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select
 from app.core.config import settings
+from app.db.session import AsyncSessionLocal
+from app.models.style_sample import StyleSample
 
 
 SYSTEM_PROMPT = """You are an AI assistant for Hillmann Consulting, helping with Site Observation Reports (SOR).
@@ -22,7 +25,43 @@ Guidelines:
 - Be helpful but concise
 
 You have access to project context when provided. Use it to give more relevant responses.
-All conversations are private and processed locally - no data is sent to external services."""
+All conversations are private and processed locally - no data is sent to external services.
+
+IMPORTANT: You have access to style samples that users have uploaded. When asked about learned samples or writing style, reference the style samples context provided below."""
+
+
+async def get_style_samples_context() -> str:
+    """Fetch style samples summary to include in chat context."""
+    async with AsyncSessionLocal() as db:
+        result = await db.execute(
+            select(StyleSample).order_by(StyleSample.created_at.desc()).limit(20)
+        )
+        samples = result.scalars().all()
+        
+        if not samples:
+            return "No style samples have been uploaded yet."
+        
+        # Group by sample_id
+        samples_by_id = {}
+        for s in samples:
+            if s.sample_id not in samples_by_id:
+                samples_by_id[s.sample_id] = {
+                    "name": s.source_name,
+                    "type": s.report_type,
+                    "sections": []
+                }
+            samples_by_id[s.sample_id]["sections"].append({
+                "type": s.section_type,
+                "content": s.content[:200]
+            })
+        
+        context = f"UPLOADED STYLE SAMPLES ({len(samples_by_id)} reports):\n"
+        for sid, data in samples_by_id.items():
+            context += f"\n- {data['name']} ({data['type']}):\n"
+            for sec in data["sections"][:3]:  # Limit sections shown
+                context += f"  [{sec['type']}]: {sec['content']}...\n"
+        
+        return context
 
 
 async def generate_chat_response(
@@ -38,6 +77,13 @@ async def generate_chat_response(
     
     # Build system message with context
     system_content = SYSTEM_PROMPT
+    
+    # Add style samples context
+    try:
+        style_context = await get_style_samples_context()
+        system_content += f"\n\n{style_context}"
+    except Exception:
+        pass  # Don't fail chat if style samples unavailable
     
     if context:
         if context.get("section_type"):
