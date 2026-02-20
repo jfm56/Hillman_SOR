@@ -295,20 +295,30 @@ sor-ai-system/
 
 ## Server Deployment
 
+### Production Server
+
+| Resource | Specification |
+|----------|---------------|
+| **Host** | Physical Server |
+| **CPU** | Intel Core i7-11800H (8 cores) |
+| **RAM** | 16 GB |
+| **Storage** | 50 GB+ |
+| **OS** | Ubuntu 24.04 |
+| **Internal IP** | 192.168.171.61 |
+| **Access** | VPN only |
+
 ### Requirements
 
-| Resource | Minimum | Recommended |
-|----------|---------|-------------|
-| CPU      | 4 cores | 8 cores     |
-| RAM      | 8 GB    | 16 GB       |
-| Storage  | 20 GB   | 50 GB       |
-| OS       | Ubuntu 20.04+ | Ubuntu 22.04 |
+| Software | Version |
+|----------|---------|
+| Docker | 24+ |
+| Docker Compose | v2+ |
 
 ### Quick Deploy
 
 ```bash
-# SSH into your server
-ssh user@YOUR_SERVER_IP
+# Connect via VPN, then SSH into the server
+ssh jim@192.168.171.61
 
 # Clone the repository
 git clone https://github.com/jfm56/Hillman_SOR.git hillmann-ai
@@ -321,13 +331,12 @@ cd hillmann-ai
 The script will:
 1. Install Docker if needed
 2. Generate secure passwords and secrets
-3. Prompt you to set your server IP
-4. Build and start all services
-5. Pull the AI models (~2GB)
+3. Build and start all services
+4. Pull the AI models (~2GB)
 
 ### Access After Deployment
 
-- **URL**: `http://YOUR_SERVER_IP`
+- **URL**: `http://192.168.171.61` (VPN required)
 - **Login**: `admin@hillmann.com` / `admin123`
 
 ⚠️ **Change the admin password after first login!**
@@ -345,7 +354,7 @@ This outputs a **webhook secret**. Then configure GitHub:
 
 1. Go to: https://github.com/jfm56/Hillman_SOR/settings/hooks
 2. Click **Add webhook**
-3. **Payload URL**: `http://YOUR_SERVER_IP:9000/webhook`
+3. **Payload URL**: `http://192.168.171.61:9000/webhook`
 4. **Content type**: `application/json`
 5. **Secret**: paste the secret from the setup script
 6. **Events**: Just the push event
@@ -356,7 +365,7 @@ Now every `git push` automatically deploys to the server.
 ### Manual Update (Without Auto-Deploy)
 
 ```bash
-ssh user@YOUR_SERVER_IP
+ssh jim@192.168.171.61
 cd hillmann-ai
 git pull
 docker compose -f docker-compose.prod.yml up -d --build
@@ -381,14 +390,13 @@ docker compose -f docker-compose.prod.yml down
 docker compose -f docker-compose.prod.yml down -v
 ```
 
-### Firewall Setup
+### File Storage
 
-```bash
-sudo ufw allow 80/tcp    # HTTP
-sudo ufw allow 443/tcp   # HTTPS (if using SSL)
-sudo ufw allow 9000/tcp  # Webhook (if using auto-deploy)
-sudo ufw enable
-```
+| Purpose | Location |
+|---------|----------|
+| **Project Files** | 192.168.168.19 (NAS) |
+| **Application Data** | /root/hillmann-ai/storage |
+| **Database** | Docker volume (sor_postgres_data) |
 
 ## License
 
