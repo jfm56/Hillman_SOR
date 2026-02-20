@@ -11,7 +11,7 @@ from sqlalchemy import select, delete
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.document_chunk import DocumentChunk
-from app.services.ai.local_llm import get_embedding_local
+from app.services.ai.local_llm import generate_embedding
 
 
 # Memory limits
@@ -127,7 +127,7 @@ async def ingest_document(
     for chunk_data in chunks:
         # Generate embedding
         try:
-            embedding = await get_embedding_local(chunk_data["chunk_text"][:2000])
+            embedding = await generate_embedding(chunk_data["chunk_text"][:2000])
         except Exception:
             embedding = None
         
@@ -159,7 +159,7 @@ async def retrieve_relevant_chunks(
     """
     # Get query embedding
     try:
-        query_embedding = await get_embedding_local(query[:1000])
+        query_embedding = await generate_embedding(query[:1000])
     except Exception:
         return []
     
