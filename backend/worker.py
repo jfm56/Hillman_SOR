@@ -22,7 +22,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.db.session import AsyncSessionLocal
 from app.models.document import Document
 from app.services.chunking import ingest_document, MAX_PDF_PAGES
-from app.services.ai.document_parser import extract_text_from_pdf
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -75,8 +74,15 @@ async def process_single_document(db: AsyncSession, doc: Document):
     if not doc.extracted_text:
         file_path = Path(doc.file_path)
         if file_path.exists() and file_path.suffix.lower() == '.pdf':
-            text = await extract_text_from_pdf(str(file_path), max_pages=MAX_PDF_PAGES)
-            doc.extracted_text = text
+            import fitz  # PyMuPDF
+            pdf_doc = fitz.open(str(file_path))
+            text_parts = []
+            for page_num, page in enumerate(pdf_doc):
+                if page_num >= MAX_PDF_PAGES:
+                    break
+                text_parts.append(page.get_text())
+            pdf_doc.close()
+            doc.extracted_text = "\n".join(text_parts)
     
     if not doc.extracted_text:
         logger.warning(f"No text extracted from document {doc.filename}")
