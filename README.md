@@ -14,8 +14,11 @@ A secure, **fully local** web application for generating Site Observation Report
 | **Style Learning** | Upload past reports to teach the AI your writing style |
 | **RAG Draft Generation** | Generate drafts matching Hillmann's writing style from learned reports |
 | **AI Chat Assistant** | Private chat for rewriting and improving report sections |
+| **Admin Dashboard** | Real-time stats, recent activity feed, and project overview |
+| **Real-Time Notifications** | WebSocket notifications for new projects and reports |
 | **Role-Based Access** | ADMIN, MANAGER, INSPECTOR roles with appropriate permissions |
 | **Full Audit Logging** | Track all user actions and AI interactions for compliance |
+| **SSL/HTTPS** | Secure connections with NGINX reverse proxy |
 
 ## Architecture
 
@@ -24,26 +27,36 @@ A secure, **fully local** web application for generating Site Observation Report
 │                      SOR AI SYSTEM (100% Local)                      │
 ├─────────────────────────────────────────────────────────────────────┤
 │                                                                      │
-│  ┌──────────────┐    ┌──────────────┐    ┌──────────────┐           │
-│  │   Frontend   │    │   Backend    │    │   Database   │           │
-│  │   Next.js    │◄──►│   FastAPI    │◄──►│  PostgreSQL  │           │
-│  │   Port 3000  │    │   Port 8000  │    │  + pgvector  │           │
-│  └──────────────┘    └──────────────┘    └──────────────┘           │
-│                             │                                        │
-│                      ┌──────┴──────┐    ┌──────────────┐            │
-│                      │ AI Services │◄──►│   Ollama     │            │
-│                      ├─────────────┤    │  Local LLM   │            │
-│                      │ • Chat      │    │  Port 11434  │            │
-│                      │ • RAG       │    └──────────────┘            │
-│                      │ • Draft Gen │           │                     │
-│                      │ • Style     │    ┌──────┴──────┐             │
-│                      │   Learning  │    │   Models    │             │
-│                      └─────────────┘    │ • llama3.2  │             │
-│                             │           │ • nomic-    │             │
-│                      ┌──────┴──────┐    │   embed     │             │
-│                      │File Storage │    └─────────────┘             │
-│                      │ ./storage/  │                                 │
-│                      └─────────────┘                                 │
+│  User → VPN → HTTPS (443)                                           │
+│                  ↓                                                   │
+│           ┌──────────────┐                                          │
+│           │    NGINX     │  (SSL Termination)                       │
+│           │   Port 443   │                                          │
+│           └──────┬───────┘                                          │
+│                  │                                                   │
+│     ┌────────────┼────────────┐                                     │
+│     ↓            ↓            ↓                                     │
+│  ┌──────────┐ ┌──────────┐ ┌──────────┐                             │
+│  │ Frontend │ │ Backend  │ │ Database │                             │
+│  │ Next.js  │ │ FastAPI  │ │PostgreSQL│                             │
+│  │  :3000   │ │  :8000   │ │+ pgvector│                             │
+│  └──────────┘ └────┬─────┘ └──────────┘                             │
+│                    │                                                 │
+│             ┌──────┴──────┐    ┌──────────────┐                     │
+│             │ AI Services │◄──►│   Ollama     │                     │
+│             ├─────────────┤    │  Local LLM   │                     │
+│             │ • Chat      │    │  Port 11434  │                     │
+│             │ • RAG       │    └──────────────┘                     │
+│             │ • Draft Gen │           │                              │
+│             │ • Style     │    ┌──────┴──────┐                      │
+│             │   Learning  │    │   Models    │                      │
+│             │ • WebSocket │    │ • llama3.2  │                      │
+│             └─────────────┘    │ • nomic-    │                      │
+│                    │           │   embed     │                      │
+│             ┌──────┴──────┐    └─────────────┘                      │
+│             │File Storage │                                         │
+│             │ ./storage/  │                                         │
+│             └─────────────┘                                         │
 └─────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -209,7 +222,14 @@ npm run dev
 | POST | `/api/v1/reports` | Create report |
 | POST | `/api/v1/reports/{id}/generate` | Generate AI drafts |
 
-See full API documentation at http://localhost:8000/docs
+### Dashboard & Notifications
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/v1/dashboard/stats` | Get dashboard statistics |
+| GET | `/api/v1/dashboard/recent-projects` | Get recent projects |
+| WS | `/api/v1/ws` | WebSocket for real-time notifications |
+
+See full API documentation at https://192.168.171.61/api/docs
 
 ## Project Structure
 
@@ -251,11 +271,12 @@ sor-ai-system/
 
 ## Security
 
-- JWT authentication
-- Role-based access control (admin, manager, inspector, reviewer)
-- All AI processing on-premises (no external data exposure)
-- Full audit logging for compliance
-- Database encryption at rest
+- **SSL/HTTPS** - All traffic encrypted via NGINX reverse proxy
+- **JWT authentication** - Secure token-based auth
+- **Role-based access control** - Admin, manager, inspector, reviewer roles
+- **100% on-premises AI** - No external data exposure
+- **Full audit logging** - Track all user actions for compliance
+- **VPN required** - Internal network access only
 
 ## Environment Variables
 
@@ -335,7 +356,7 @@ The script will:
 
 ### Access After Deployment
 
-- **URL**: `http://192.168.171.61` (VPN required)
+- **URL**: `https://192.168.171.61` (VPN required, accept self-signed cert)
 - **Login**: `admin@hillmann.com` / `admin123`
 
 ⚠️ **Change the admin password after first login!**
@@ -436,7 +457,7 @@ docker compose -f docker-compose.prod.yml up -d --build
 docker compose -f docker-compose.prod.yml logs -f backend
 ```
 
-Access app at: `http://192.168.171.61` (via VPN)
+Access app at: `https://192.168.171.61` (via VPN)
 
 ## License
 
