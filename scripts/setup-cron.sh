@@ -9,8 +9,8 @@ BACKUP_SCRIPT="$SCRIPT_DIR/backup.sh"
 chmod +x "$SCRIPT_DIR/backup.sh"
 chmod +x "$SCRIPT_DIR/restore.sh"
 
-# Add cron job for daily backup at 2 AM
-CRON_JOB="0 2 * * * $BACKUP_SCRIPT >> /var/log/sor-backup.log 2>&1"
+# Add cron job for daily backup at 6 PM (end of business day)
+CRON_JOB="0 18 * * * $BACKUP_SCRIPT >> /var/log/sor-backup.log 2>&1"
 
 # Check if cron job already exists
 if crontab -l 2>/dev/null | grep -q "backup.sh"; then
@@ -18,13 +18,13 @@ if crontab -l 2>/dev/null | grep -q "backup.sh"; then
 else
     # Add the cron job
     (crontab -l 2>/dev/null; echo "$CRON_JOB") | crontab -
-    echo "Added daily backup cron job (runs at 2 AM)"
+    echo "Added daily backup cron job (runs at 6 PM)"
 fi
 
 echo ""
 echo "Backup configuration:"
 echo "  - Script: $BACKUP_SCRIPT"
-echo "  - Schedule: Daily at 2:00 AM"
+echo "  - Schedule: Daily at 6:00 PM"
 echo "  - Log: /var/log/sor-backup.log"
 echo "  - Backups kept: 30 days"
 echo ""
