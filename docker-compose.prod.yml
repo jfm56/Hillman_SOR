@@ -47,7 +47,7 @@ services:
       - USE_LOCAL_LLM=true
       - LOCAL_MODEL=llama3.2
       - STORAGE_PATH=/app/storage
-      - CORS_ORIGINS=http://192.168.171.61,http://localhost:3000,http://localhost
+      - CORS_ORIGINS=https://192.168.171.61,http://192.168.171.61,http://localhost:3000,http://localhost
     volumes:
       - ./storage:/app/storage
       - ./models:/app/models
@@ -98,11 +98,12 @@ services:
     container_name: sor_nginx
     mem_limit: 128m
     ports:
-      - "192.168.171.61:80:80"
+      - "80:80"
       - "443:443"
     volumes:
-      - ./nginx.conf:/etc/nginx/nginx.conf:ro
-      - ./ssl:/etc/nginx/ssl:ro
+      - ./nginx-ssl.conf:/etc/nginx/nginx.conf:ro
+      - ./ssl/hillmann.crt:/etc/ssl/certs/hillmann.crt:ro
+      - ./ssl/hillmann.key:/etc/ssl/private/hillmann.key:ro
     depends_on:
       - frontend
       - backend
