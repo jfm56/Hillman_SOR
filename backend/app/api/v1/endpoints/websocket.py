@@ -1,6 +1,6 @@
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect, Depends, Query
 from typing import Optional
-import jwt
+from jose import jwt, JWTError
 
 from app.core.config import settings
 from app.services.notifications import manager
@@ -20,7 +20,7 @@ async def websocket_endpoint(
         try:
             payload = jwt.decode(token, settings.SECRET_KEY, algorithms=["HS256"])
             user_id = payload.get("sub")
-        except jwt.PyJWTError:
+        except JWTError:
             await websocket.close(code=4001)
             return
     
