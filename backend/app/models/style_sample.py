@@ -13,6 +13,7 @@ class StyleSample(Base):
     id = Column(String(36), primary_key=True)
     sample_id = Column(String(36), nullable=False, index=True)
     source_name = Column(String(255), nullable=False)
+    report_type = Column(String(50), nullable=True)
     section_type = Column(String(100), nullable=False, index=True)
     content = Column(Text, nullable=False)
     embedding = Column(Vector(768), nullable=True)
